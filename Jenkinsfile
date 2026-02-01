@@ -2,45 +2,53 @@ pipeline {
     agent any
 
     environment {
-        NODE_ENV = 'production'
+        IMAGE_NAME = "web-sockets-app"
+        IMAGE_TAG  = "latest"
+        CONTAINER_NAME = "web-sockets-app-container"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Clonando repositorio...'
                 checkout scm
             }
         }
 
-        stage('Install dependencies') {
+        stage('Build Docker Image') {
             steps {
-                echo 'Instalando dependencias...'
-                sh 'npm install'
+                script {
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                }
             }
         }
-        
-        stage('Deploy') {
-            when {
-                branch 'main'
-            }
+
+        stage('Run Container') {
             steps {
-                echo 'Publicando aplicación...'
-                sh 'npm start'
+                script {
+                    // Detiene y elimina el contenedor si ya existe
+                    sh """
+                    docker rm -f ${CONTAINER_NAME} || true
+                    docker run -d \
+                      --name ${CONTAINER_NAME} \
+                      -p 3000:3000 \
+                      ${IMAGE_NAME}:${IMAGE_TAG}
+                    """
+                }
             }
         }
     }
 
     post {
         success {
-            echo '✅ Pipeline ejecutado correctamente'
+            echo "✅ Pipeline ejecutado correctamente"
         }
         failure {
-            echo '❌ Pipeline falló'
+            echo "❌ Error en el pipeline"
         }
-        always {
-            cleanWs()
+        cleanup {
+            // Limpieza opcional
+            sh "docker system prune -f || true"
         }
     }
 }
