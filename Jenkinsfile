@@ -11,7 +11,8 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main',
+                url: 'https://github.com/wilhenc36/web-sockets.git'
             }
         }
 
@@ -30,6 +31,7 @@ pipeline {
                     sh """
                     docker rm -f ${CONTAINER_NAME} || true
                     docker run -d \
+                      --restart unless-stopped \
                       --name ${CONTAINER_NAME} \
                       -p 3000:3000 \
                       ${IMAGE_NAME}:${IMAGE_TAG}
