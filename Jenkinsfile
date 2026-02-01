@@ -5,11 +5,6 @@ pipeline {
         NODE_ENV = 'production'
     }
 
-    options {
-        timestamps()
-        ansiColor('xterm')
-    }
-
     stages {
 
         stage('Checkout') {
